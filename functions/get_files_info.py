@@ -1,12 +1,15 @@
 import os
-from functions.checks import check_path
+from functions.checks import check_path_inside, check_dir_exist
 
 
 def get_files_info(working_directory, directory="."):
     try:
-        check_result = check_path(working_directory, directory)
-        if check_result:
-            return check_result
+        check_path = check_path_inside(directory)
+        if check_path:
+            return check_path
+        check_dir = check_dir_exist(working_directory, directory)
+        if check_dir:
+            return check_dir
 
         dir_abs = os.path.abspath(working_directory + "/" + directory)
         dir_info = []

@@ -1,12 +1,15 @@
 import os
-from functions.checks import check_path
+from functions.checks import check_path_inside, check_file_exist
 from config import MAX_CHARS
 
 
 def get_file_content(working_directory, file_path):
-    check_result = check_path(working_directory, file_path, True)
-    if check_result:
-        return check_result
+    check_path = check_path_inside(file_path)
+    if check_path:
+        return check_path
+    check_file = check_file_exist(working_directory, file_path)
+    if check_file:
+        return check_file
 
     try:
         dir_abs = os.path.abspath(working_directory + "/" + file_path)
