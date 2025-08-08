@@ -24,7 +24,6 @@ def run_python_file(working_directory, file_path, args=[]):
         result = subprocess.run(
             ["python", dir_abs, *args], timeout=TIMEOUT, capture_output=True
         )
-        print(result)
         if result:
             return f"STDOUT: {result.stdout}, STDERR: {result.stderr}, Process exited with code {result.returncode}"
         return "No output produced"

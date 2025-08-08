@@ -7,7 +7,6 @@ from pkg.render import render
 
 def main():
     calculator = Calculator()
-    print("CALCULATOOOOR", sys.argv)
     if len(sys.argv) < 2:
         print("Calculator App")
         print('Usage: python main.py "<expression>"')

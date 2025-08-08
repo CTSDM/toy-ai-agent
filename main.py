@@ -7,6 +7,7 @@ from functions.get_files_info import schema_get_files_info
 from functions.get_file_content import schema_get_file_content
 from functions.run_python_file import schema_run_python_file
 from functions.write_file import schema_write_file
+from functions.call_function import call_function
 
 from config import SYSTEMP_PROMPT
 
@@ -38,18 +39,32 @@ def main():
             tools=[available_functions], system_instruction=SYSTEMP_PROMPT
         ),
     )
+
+    # updating verbose flag if necessary
+    verbose = False
+    if len(sys.argv) == 3 and sys.argv[2] == "--verbose":
+        verbose = True
+
     print("Hello from toy-ai-agent!")
     if response != None:
-        function_call = response.function_calls
-        if function_call:
-            print(f"Calling function: {function_call[0].name}({function_call[0].args})")
-        else:
-            print(response.text)
+        try:
+            function_call = response.function_calls
+            function_call_result = None
+            if function_call:
+                function_call_result = call_function(function_call[0], verbose)
+            else:
+                print(response.text)
 
-        if len(sys.argv) == 3 and sys.argv[2] == "--verbose":
-            print("User prompt:", contents)
-            print("Prompt tokens:", response.usage_metadata.prompt_token_count)
-            print("Response tokens:", response.usage_metadata.candidates_token_count)
+            if verbose:
+                print(f"-> {function_call_result.parts[0].function_response.response}")
+                print("User prompt:", contents)
+                print("Prompt tokens:", response.usage_metadata.prompt_token_count)
+                print(
+                    "Response tokens:", response.usage_metadata.candidates_token_count
+                )
+
+        except Exception as e:
+            print(f'Error: "{e}"')
 
 
 def get_aiclient():

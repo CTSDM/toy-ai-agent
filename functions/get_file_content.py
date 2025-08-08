@@ -18,7 +18,7 @@ def get_file_content(working_directory, file_path):
             file_content_string = f.read(MAX_CHARS + 1)
         if len(file_content_string) > MAX_CHARS:
             file_content_string = file_content_string[:-1] + (
-                f'[...File "{dir_abs}" truncated at ${MAX_CHARS} characters].'
+                f'[...File "{dir_abs}" truncated at {MAX_CHARS} characters].'
             )
         return file_content_string
 
