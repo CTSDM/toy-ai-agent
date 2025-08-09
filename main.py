@@ -9,7 +9,7 @@ from functions.run_python_file import schema_run_python_file
 from functions.write_file import schema_write_file
 from functions.call_function import call_function
 
-from config import SYSTEMP_PROMPT
+from config import SYSTEMP_PROMPT, MAX_CALLS_AGENT
 
 load_dotenv()
 
@@ -32,39 +32,61 @@ def main():
             schema_write_file,
         ]
     )
-    response = client.models.generate_content(
-        model="gemini-2.0-flash-001",
-        contents=messages,
-        config=types.GenerateContentConfig(
-            tools=[available_functions], system_instruction=SYSTEMP_PROMPT
-        ),
-    )
-
-    # updating verbose flag if necessary
     verbose = False
     if len(sys.argv) == 3 and sys.argv[2] == "--verbose":
         verbose = True
 
-    print("Hello from toy-ai-agent!")
-    if response != None:
-        try:
-            function_call = response.function_calls
-            function_call_result = None
-            if function_call:
-                function_call_result = call_function(function_call[0], verbose)
-            else:
-                print(response.text)
+    for _ in range(MAX_CALLS_AGENT):
+        response = client.models.generate_content(
+            model="gemini-2.0-flash-001",
+            contents=messages,
+            config=types.GenerateContentConfig(
+                tools=[available_functions], system_instruction=SYSTEMP_PROMPT
+            ),
+        )
 
+        # we add all the responses to the messages to have context
+        if response.candidates:
+            for candidate in response.candidates:
+                messages.append(candidate.content)
+
+        # if there are no more function calls, it is safe to assume we have a final answer
+        if not response.function_calls:
+            if response.text:
+                print("Final response")
+                print(response.text)
+                return
             if verbose:
-                print(f"-> {function_call_result.parts[0].function_response.response}")
                 print("User prompt:", contents)
                 print("Prompt tokens:", response.usage_metadata.prompt_token_count)
                 print(
                     "Response tokens:", response.usage_metadata.candidates_token_count
                 )
 
+        try:
+            function_responses = []
+            # let's handle the function calls
+            # we need to call all the functions available
+            for function_call in response.function_calls:
+                function_response = call_function(function_call, verbose)
+
+                if (
+                    not function_response.parts
+                    or not function_response.parts[0].function_response
+                ):
+                    raise Exception("empty function call result")
+
+                function_responses.append(function_response.parts[0])
+
+            messages.append(types.Content(role="tool", parts=function_responses))
+
         except Exception as e:
             print(f'Error: "{e}"')
+            raise
+
+    print(
+        f"Max calls to the agent ({MAX_CALLS_AGENT}) have been reached without having an answer..."
+    )
 
 
 def get_aiclient():

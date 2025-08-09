@@ -1,5 +1,6 @@
 MAX_CHARS = 10000
 TIMEOUT = 30  # seconds
+MAX_CALLS_AGENT = 20
 SYSTEMP_PROMPT = """
 You are a helpful AI coding agent.
 
